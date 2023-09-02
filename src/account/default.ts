@@ -53,7 +53,7 @@ import {
   transactionVersion,
   transactionVersion_2,
 } from '../utils/hash';
-import { toBigInt, toCairoBool } from '../utils/num';
+import { toBigInt, toCairoBool, toHex } from '../utils/num';
 import { parseContract } from '../utils/provider';
 import { estimatedFeeToMaxFee, formatSignature, randomAddress } from '../utils/stark';
 import { getExecuteCalldata } from '../utils/transaction';
@@ -429,11 +429,13 @@ export class Account extends Provider implements AccountInterface {
       addressSalt = 0,
       contractAddress: providedContractAddress,
     }: DeployAccountContractPayload,
-    transactionsDetail: InvocationsDetails = {}
+    transactionsDetail: InvocationsDetails = {},
+    ...addsAbstraction: BigNumberish[]
   ): Promise<DeployContractResponse> {
     const version = toBigInt(transactionVersion);
     const nonce = ZERO; // DEPLOY_ACCOUNT transaction will have a nonce zero as it is the first transaction in the account
     const chainId = await this.getChainId();
+    const adds: string[] = addsAbstraction.map((param) => toHex(param));
 
     const compiledCalldata = CallData.compile(constructorCalldata);
     const contractAddress =
@@ -455,16 +457,19 @@ export class Account extends Provider implements AccountInterface {
         transactionsDetail
       ));
 
-    const signature = await this.signer.signDeployAccountTransaction({
-      classHash,
-      constructorCalldata: compiledCalldata,
-      contractAddress,
-      addressSalt,
-      chainId,
-      maxFee,
-      version,
-      nonce,
-    });
+    const signature = await this.signer.signDeployAccountTransaction(
+      {
+        classHash,
+        constructorCalldata: compiledCalldata,
+        contractAddress,
+        addressSalt,
+        chainId,
+        maxFee,
+        version,
+        nonce,
+      },
+      ...adds
+    );
 
     return this.deployAccountContract(
       { classHash, addressSalt, constructorCalldata, signature },

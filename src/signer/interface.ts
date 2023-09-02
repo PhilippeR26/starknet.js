@@ -1,5 +1,6 @@
 import {
   Abi,
+  BigNumberish,
   Call,
   DeclareSignerDetails,
   DeployAccountSignerDetails,
@@ -55,10 +56,12 @@ export abstract class SignerInterface {
    * - maxFee - maxFee for the declare transaction
    * - version - transaction version
    * - nonce - Nonce of the declare transaction
+   * @param adds an array of BigNumberish, used as additional parameters for account abstraction, for message hash and signature.
    * @returns signature
    */
   public abstract signDeployAccountTransaction(
-    transaction: DeployAccountSignerDetails
+    transaction: DeployAccountSignerDetails,
+    ...adds: BigNumberish[]
   ): Promise<Signature>;
 
   /**
