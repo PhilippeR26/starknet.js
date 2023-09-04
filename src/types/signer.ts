@@ -24,7 +24,7 @@ export interface DeclareSignerDetails {
 }
 
 export type AbstractionAccountDeployFunctionSign = (
-  hash: string,
+  standardInputData: DeployAccountSignerDetails,
   privateKey: string,
   ...additionalParams: string[]
 ) => Signature;
@@ -35,32 +35,6 @@ export interface AbstractionSigns {
   abstractedDeployContractSign?: Function;
   abstractedMessageSign?: Function;
   abstractedDeclareSign?: Function;
-}
-
-export type AbstractionAccountDeployFunctionHash = (
-  {
-    classHash,
-    contractAddress,
-    constructorCalldata,
-    addressSalt,
-    maxFee,
-    version,
-    chainId,
-    nonce,
-  }: DeployAccountSignerDetails,
-  ...additionalParams: BigNumberish[]
-) => Signature;
-export interface AbstractionHashs {
-  abstractedTransactionHash?: Function;
-  abstractedAccountDeployHash?: Function;
-  abstractedContractDeployHash?: Function;
-  abstractedMessageHash?: Function;
-  abstractedDeclareHash?: Function;
-}
-
-export interface AbstractionFunction {
-  sign?: AbstractionSigns;
-  hash?: AbstractionHashs;
 }
 
 export type DeployAccountSignerDetails = Required<DeployAccountContractPayload> &
