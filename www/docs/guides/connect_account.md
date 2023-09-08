@@ -67,3 +67,7 @@ const accountAddress = "0x051158d244c7636dde39ec822873b29e6c9a758c6a9812d005b628
 
 const account = new Account(provider, accountAddress, privateKey);
 ```
+
+## 👛 Connect to an existing account using account abstraction
+
+TODO
