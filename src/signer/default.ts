@@ -1,6 +1,6 @@
 import {
   Abi,
-  AbstractionFunction,
+  AbstractionSigns,
   Call,
   DeclareSignerDetails,
   DeployAccountSignerDetails,
@@ -24,7 +24,7 @@ import { SignerInterface } from './interface';
 export class Signer implements SignerInterface {
   protected pk: Uint8Array | string;
 
-  public abstractionFunctions: AbstractionFunction | undefined;
+  public abstractionFunctions: AbstractionSigns | undefined;
 
   /**
    * Creation of a Signer Object
@@ -32,7 +32,7 @@ export class Signer implements SignerInterface {
    */
   constructor(
     pk: Uint8Array | string = starkCurve.utils.randomPrivateKey(),
-    abstractedFns?: AbstractionFunction
+    abstractedFns?: AbstractionSigns
   ) {
     this.pk = pk instanceof Uint8Array ? buf2hex(pk) : toHex(pk);
     this.abstractionFunctions = abstractedFns;
@@ -84,9 +84,8 @@ export class Signer implements SignerInterface {
     }: DeployAccountSignerDetails,
     ...addsAbstraction: string[]
   ): Promise<Signature> {
-    let msgHash: string;
-    if (!this.abstractionFunctions?.hash?.abstractedAccountDeployHash) {
-      msgHash = calculateDeployAccountTransactionHash(
+    if (!this.abstractionFunctions?.abstractedDeployAccountSign) {
+      const msgHash = calculateDeployAccountTransactionHash(
         contractAddress,
         classHash,
         CallData.compile(constructorCalldata),
@@ -96,14 +95,19 @@ export class Signer implements SignerInterface {
         chainId,
         nonce
       );
-    } else {
-      msgHash = this.abstractionFunctions.hash.abstractedAccountDeployHash();
-    }
-    if (!this.abstractionFunctions?.sign?.abstractedDeployAccountSign) {
       return starkCurve.sign(msgHash, this.pk);
     }
-    return this.abstractionFunctions.sign.abstractedDeployAccountSign(
-      msgHash,
+    return this.abstractionFunctions.abstractedDeployAccountSign(
+      {
+        classHash,
+        contractAddress,
+        constructorCalldata,
+        addressSalt,
+        maxFee,
+        version,
+        chainId,
+        nonce,
+      },
       this.pk.toString(),
       ...addsAbstraction
     );
