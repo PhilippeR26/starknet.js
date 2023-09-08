@@ -1,7 +1,6 @@
 import {
   Abi,
-  AbstractionHashs,
-  AbstractionSigns,
+  AbstractionFunction,
   Call,
   DeclareSignerDetails,
   DeployAccountSignerDetails,
@@ -25,9 +24,7 @@ import { SignerInterface } from './interface';
 export class Signer implements SignerInterface {
   protected pk: Uint8Array | string;
 
-  abstractionSigns: AbstractionSigns | undefined;
-
-  abstractionHashs: AbstractionHashs | undefined;
+  public abstractionFunctions: AbstractionFunction | undefined;
 
   /**
    * Creation of a Signer Object
@@ -35,12 +32,10 @@ export class Signer implements SignerInterface {
    */
   constructor(
     pk: Uint8Array | string = starkCurve.utils.randomPrivateKey(),
-    abstractedSigns?: AbstractionSigns,
-    abstractedHashs?: AbstractionHashs
+    abstractedFns?: AbstractionFunction
   ) {
     this.pk = pk instanceof Uint8Array ? buf2hex(pk) : toHex(pk);
-    this.abstractionSigns = abstractedSigns;
-    this.abstractionHashs = abstractedHashs;
+    this.abstractionFunctions = abstractedFns;
   }
 
   public async getPubKey(): Promise<string> {
@@ -76,28 +71,42 @@ export class Signer implements SignerInterface {
     return starkCurve.sign(msgHash, this.pk);
   }
 
-  public async signDeployAccountTransaction({
-    classHash,
-    contractAddress,
-    constructorCalldata,
-    addressSalt,
-    maxFee,
-    version,
-    chainId,
-    nonce,
-  }: DeployAccountSignerDetails): Promise<Signature> {
-    const msgHash = calculateDeployAccountTransactionHash(
-      contractAddress,
+  public async signDeployAccountTransaction(
+    {
       classHash,
-      CallData.compile(constructorCalldata),
+      contractAddress,
+      constructorCalldata,
       addressSalt,
-      version,
       maxFee,
+      version,
       chainId,
-      nonce
+      nonce,
+    }: DeployAccountSignerDetails,
+    ...addsAbstraction: string[]
+  ): Promise<Signature> {
+    let msgHash: string;
+    if (!this.abstractionFunctions?.hash?.abstractedAccountDeployHash) {
+      msgHash = calculateDeployAccountTransactionHash(
+        contractAddress,
+        classHash,
+        CallData.compile(constructorCalldata),
+        addressSalt,
+        version,
+        maxFee,
+        chainId,
+        nonce
+      );
+    } else {
+      msgHash = this.abstractionFunctions.hash.abstractedAccountDeployHash();
+    }
+    if (!this.abstractionFunctions?.sign?.abstractedDeployAccountSign) {
+      return starkCurve.sign(msgHash, this.pk);
+    }
+    return this.abstractionFunctions.sign.abstractedDeployAccountSign(
+      msgHash,
+      this.pk.toString(),
+      ...addsAbstraction
     );
-
-    return starkCurve.sign(msgHash, this.pk);
   }
 
   public async signDeclareTransaction(

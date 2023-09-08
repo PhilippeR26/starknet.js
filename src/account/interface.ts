@@ -257,7 +257,8 @@ export abstract class AccountInterface extends ProviderInterface {
    */
   public abstract deployAccount(
     contractPayload: DeployAccountContractPayload,
-    transactionsDetail?: InvocationsDetails
+    transactionsDetail?: InvocationsDetails,
+    ...addsAbstraction: BigNumberish[]
   ): Promise<DeployContractResponse>;
 
   /**
