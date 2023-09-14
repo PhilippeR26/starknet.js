@@ -95,11 +95,9 @@ const OZaccount = new Account(provider, OZcontractAddress, privateKey, "1");
 
 ## Create an Argent account
 
-> Level: medium.
+> Level: easy.
 
-Here, we will create a wallet with the Argent smart contract v0.2.3. This case is more complicated because we will have the account behind a proxy contract (this way, the wallet contract can be updated). The contract classes of both contracts are already implemented in both Testnet 1 & 2.
-
-> If necessary OZ contracts can also be created with a proxy.
+Here, we will create a wallet with the Argent smart contract v0.2.3. The contract class is already implemented in both Mainnet & Testnet.
 
 ```typescript
 import { Account, ec, json, stark, Provider, hash, CallData } from "starknet";
@@ -111,9 +109,8 @@ import { Account, ec, json, stark, Provider, hash, CallData } from "starknet";
 // connect provider
 const provider = new Provider({ sequencer: { network: constants.NetworkName.SN_GOERLI } });
 
-//new Argent X account v0.2.3
-const argentXproxyClassHash = "0x25ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-const argentXaccountClassHash = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
+//new Argent X account v0.3.0
+const contractAXclassHash = "0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003";
 
 // Generate public and private key pair.
 const privateKeyAX = stark.randomAddress();
@@ -122,21 +119,17 @@ const starkKeyPubAX = ec.starkCurve.getStarkKey(privateKey);
 console.log('AX_ACCOUNT_PUBLIC_KEY=', starkKeyPubAX);
 
 // Calculate future address of the ArgentX account
-const AXproxyConstructorCallData = CallData.compile({
-    implementation: argentXaccountClassHash,
-    selector: hash.getSelectorFromName("initialize"),
-    calldata: CallData.compile({ signer: starkKeyPubAX, guardian: "0" }),
-});
+const constructorCallData = CallData.compile({ owner: starkKeyPubAX, guardian: "0" });
 const AXcontractAddress = hash.calculateContractAddressFromHash(
     starkKeyPubAX,
-    argentXproxyClassHash,
-    AXproxyConstructorCallData,
+    contractAXclassHash,
+    constructorCallData,
     0
 );
 console.log('Precalculated account address=', AXcontractAddress);
 ```
 
-If you want a specific private key, replace `stark.randomAddress`()` with your choice.
+If you want a specific private key, replace `stark.randomAddress`()` by your choice.
 
 Then you have to fund this address.
 
@@ -145,11 +138,11 @@ Then you have to fund this address.
 If you have sent enough funds to this new address, you can go forward to the final step:
 
 ```typescript
-const accountAX = new Account(provider, AXcontractAddress, privateKeyAX);
+const accountAX = new Account(provider, AXcontractAddress, privateKeyAX,"1");
 
 const deployAccountPayload = {
-    classHash: argentXproxyClassHash,
-    constructorCalldata: AXproxyConstructorCallData,
+    classHash: contractAXclassHash,
+    constructorCalldata: constructorCallData,
     contractAddress: AXcontractAddress,
     addressSalt: starkKeyPubAX };
 
@@ -157,7 +150,7 @@ const { transaction_hash: AXdAth, contract_address: AXcontractFinalAdress } = aw
 console.log('✅ ArgentX wallet deployed at:',AXcontractFinalAdress);
 ```
 
-> If you have activated the Argent Shield (2FA) for this account, the standard `Account` instance of Starknet.js is no more able to handle new transactions. In this case you need to use the account abstraction to define how are signed the transactions in this case (by creating a specific signer).
+> If you have activated the Argent Shield (2FA) for this account, the standard `Account` instance of Starknet.js is no more able to handle new transactions.
 
 ## Create a Braavos account
 
