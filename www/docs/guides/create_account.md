@@ -73,7 +73,7 @@ curl -X POST http://127.0.0.1:5050/mint -d '{"address":"0x04a093c37ab61065d00155
 If you have sent enough funds to this new address, you can go forward to the final step:
 
 ```typescript
-const OZaccount = new Account(provider, OZcontractAddress, privateKey);
+const OZaccount = new Account(provider, OZcontractAddress, privateKey,"0"); //Cairo 0 account
 
 const { transaction_hash, contract_address } = await OZaccount.deployAccount({
     classHash: OZaccountClassHash,
@@ -260,7 +260,7 @@ const privateKeyBraavos = account3BraavosTestnetPrivateKey;
     const starkKeyPubBraavos = ec.starkCurve.getStarkKey(privateKeyBraavos);
     const proxyAddressBraavos = calculateAddressBraavos(privateKeyBraavos);
     const accountClassHashBraavos = "0x0105c0cf7aadb6605c9538199797920884694b5ce84fc68f92c832b0c9f57ad9"; // 27/aug/2023, will probably change over time
-    const accountBraavos = new Account(provider, proxyAddressBraavos, signerBraavos);
+    const accountBraavos = new Account(provider, proxyAddressBraavos, signerBraavos, "0");
 console.log('Calculated account address=', accountBraavos.address);
 ```
 
@@ -350,8 +350,7 @@ const provider = new Provider({ sequencer: { network: "http://127.0.0.1:5050" } 
 // initialize existing predeployed account 0 of Devnet
 const privateKey0 = "0xe3e70682c2094cac629f6fbed82c07cd";
 const accountAddress0 = "0x7e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a";
-const account0 = new Account(provider, accountAddress0, privateKey0);
-// add ,"1" after privateKey0 if this account is not a Cairo 0 contract
+const account0 = new Account(provider, accountAddress0, privateKey0, "0");
 
 // new account abstraction
 // Generate public and private key pair.
@@ -385,7 +384,7 @@ const { data: answer } = await axios.post('http://127.0.0.1:5050/mint', { "addre
 console.log('Answer mint =', answer);
 
 // deploy account
-const AAaccount = new Account(provider, AAcontractAddress, AAprivateKey);
+const AAaccount = new Account(provider, AAcontractAddress, AAprivateKey, "0");
 // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
 const { transaction_hash, contract_address } = await AAaccount.deployAccount({
     classHash: AAaccountClassHash,

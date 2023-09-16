@@ -40,7 +40,7 @@ const provider = new Provider({ sequencer: { baseUrl:"http://127.0.0.1:5050"  } 
 const privateKey = "0xe3e70682c2094cac629f6fbed82c07cd";
 const accountAddress = "0x7e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a";
 
-const account = new Account(provider, accountAddress, privateKey);
+const account = new Account(provider, accountAddress, privateKey,"0");
 ```
 
 Your account is now connected, and you can use it.
@@ -51,6 +51,7 @@ Your account is now connected, and you can use it.
 const account = new Account(provider, accountAddress, privateKey, "1");
 ```
 
+> It's a good practice to have this parameter always implemented.  
 > Take care that this added parameter is a string, NOT a number.
 
 ## 👛 Connect to an existing account (in any network)
@@ -73,8 +74,8 @@ const provider = new Provider({ sequencer: { network: constants.NetworkName.SN_G
 const privateKey = process.env.OZ_NEW_ACCOUNT_PRIVKEY;
 const accountAddress = "0x051158d244c7636dde39ec822873b29e6c9a758c6a9812d005b6287564908667";
 
-const account = new Account(provider, accountAddress, privateKey);
-// add ,"1" after privateKey if this account is not a Cairo 0 contract
+const account = new Account(provider, accountAddress, privateKey,"0");
+// for a Cairo 0 account
 
 ```
 

@@ -24,7 +24,8 @@ const contractAddress_2 = '0x078f36c1d59dd29e00a0bb60aa2a9409856f4f9841c47f165ab
 const account = new Account(
     provider,
     accountAddress,
-    privateKey
+    privateKey,
+    "0", // Cairo 0 account
   );
 ```
 

@@ -42,8 +42,8 @@ const provider = new Provider({ sequencer: { baseUrl: "http://127.0.0.1:5050" } 
 // connect your account. To adapt to your own account:
 const privateKey0 = process.env.OZ_ACCOUNT_PRIVATE_KEY;
 const account0Address: string = "0x123....789";
-const account0 = new Account(provider, account0Address, privateKey0);
-// add ,"1" after privateKey0 if this account is not a Cairo 0 contract
+const account0 = new Account(provider, account0Address, privateKey0, "0");
+// Cairo 0 account
 
 // Declare & deploy Test contract in devnet
 const compiledTestSierra = json.parse(fs.readFileSync( "./compiledContracts/test.sierra").toString( "ascii"));
@@ -67,8 +67,8 @@ const provider = new Provider({ sequencer: { baseUrl: "http://127.0.0.1:5050" } 
 const privateKey0 = process.env.OZ_ACCOUNT_PRIVATE_KEY;
 const account0Address: string = "0x123....789";
 
-const account0 = new Account(provider, account0Address, privateKey0);
-// add ,"1" after privateKey0 if this account is not a Cairo 0 contract
+const account0 = new Account(provider, account0Address, privateKey0, "0");
+// Cairo 0 account
 
 // Deploy Test contract in devnet
 // ClassHash of the already declared contract
@@ -167,8 +167,8 @@ const provider = new Provider({ sequencer: { baseUrl: "http://127.0.0.1:5050" } 
 const privateKey0 = process.env.OZ_ACCOUNT_PRIVATE_KEY;
 const account0Address: string = "0x123....789";
 
-const account0 = new Account(provider, account0Address, privateKey0);
-// add ,"1" after privateKey0 if this account is not a Cairo 0 contract
+const account0 = new Account(provider, account0Address, privateKey0, "0");
+// Cairo 0 account
 
 // Declare Test contract in devnet
 const compiledTestSierra = json.parse(fs.readFileSync( "./compiledContracts/test.sierra").toString("ascii"));
