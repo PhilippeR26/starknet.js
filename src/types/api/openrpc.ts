@@ -300,7 +300,7 @@ type TYPED_PARAMETER = {
 };
 
 type DEPRECATED_CAIRO_ENTRY_POINT = {
-  offset: NUM_AS_HEX;
+  offset: NUM_AS_HEX | number;
   selector: FELT;
 };
 type SIERRA_ENTRY_POINT = { selector: FELT; function_idx: number };
