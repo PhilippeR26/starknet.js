@@ -1,11 +1,11 @@
 import { BigNumberish, BlockIdentifier } from './lib';
 import { DeclareTransactionReceiptResponse, EstimateFeeResponse } from './provider';
 
-export interface EstimateFee extends EstimateFeeResponse {
-  suggestedMaxFee: bigint;
-}
+// export interface EstimateFee extends EstimateFeeResponse {
+//   suggestedMaxFee: bigint;
+// }
 
-export type EstimateFeeBulk = Array<EstimateFee>;
+export type EstimateFeeBulk = Array<EstimateFeeResponse>;
 
 export type AccountInvocationsFactoryDetails = {
   versions: bigint[];

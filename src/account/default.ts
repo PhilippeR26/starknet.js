@@ -23,10 +23,10 @@ import {
   DeployContractUDCResponse,
   DeployTransactionReceiptResponse,
   Details,
-  EstimateFee,
   EstimateFeeAction,
   EstimateFeeBulk,
   EstimateFeeDetails,
+  EstimateFeeResponse,
   Invocation,
   Invocations,
   InvocationsDetails,
@@ -115,14 +115,14 @@ export class Account extends Provider implements AccountInterface {
   public async estimateFee(
     calls: AllowArray<Call>,
     estimateFeeDetails?: EstimateFeeDetails | undefined
-  ): Promise<EstimateFee> {
+  ): Promise<EstimateFeeResponse> {
     return this.estimateInvokeFee(calls, estimateFeeDetails);
   }
 
   public async estimateInvokeFee(
     calls: AllowArray<Call>,
     { nonce: providedNonce, blockIdentifier, skipValidate }: EstimateFeeDetails = {}
-  ): Promise<EstimateFee> {
+  ): Promise<EstimateFeeResponse> {
     const transactions = Array.isArray(calls) ? calls : [calls];
     const nonce = toBigInt(providedNonce ?? (await this.getNonce()));
     const version = toBigInt(feeTransactionVersion);
@@ -156,7 +156,7 @@ export class Account extends Provider implements AccountInterface {
   public async estimateDeclareFee(
     { contract, classHash: providedClassHash, casm, compiledClassHash }: DeclareContractPayload,
     { blockIdentifier, nonce: providedNonce, skipValidate }: EstimateFeeDetails = {}
-  ): Promise<EstimateFee> {
+  ): Promise<EstimateFeeResponse> {
     const nonce = toBigInt(providedNonce ?? (await this.getNonce()));
     const version = !isSierra(contract) ? feeTransactionVersion : feeTransactionVersion_2;
     const chainId = await this.getChainId();
@@ -195,7 +195,7 @@ export class Account extends Provider implements AccountInterface {
       contractAddress: providedContractAddress,
     }: DeployAccountContractPayload,
     { blockIdentifier, skipValidate }: EstimateFeeDetails = {}
-  ): Promise<EstimateFee> {
+  ): Promise<EstimateFeeResponse> {
     const version = toBigInt(feeTransactionVersion);
     const nonce = ZERO; // DEPLOY_ACCOUNT transaction will have a nonce zero as it is the first transaction in the account
     const chainId = await this.getChainId();
@@ -229,7 +229,7 @@ export class Account extends Provider implements AccountInterface {
   public async estimateDeployFee(
     payload: UniversalDeployerContractPayload | UniversalDeployerContractPayload[],
     transactionsDetail?: InvocationsDetails | undefined
-  ): Promise<EstimateFee> {
+  ): Promise<EstimateFeeResponse> {
     const calls = this.buildUDCContractPayload(payload);
     return this.estimateInvokeFee(calls, transactionsDetail);
   }
@@ -523,7 +523,7 @@ export class Account extends Provider implements AccountInterface {
     { type, payload }: EstimateFeeAction,
     details: EstimateFeeDetails
   ) {
-    let feeEstimate: EstimateFee;
+    let feeEstimate: EstimateFeeResponse;
 
     switch (type) {
       case TransactionType.INVOKE:
