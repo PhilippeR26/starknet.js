@@ -42,12 +42,12 @@ const config = {
     {
       algolia: {
         // The application ID provided by Algolia
-        appId: '71M7ISN94U',
+        appId: '86VVNRI64B',
 
         // Public API key: it is safe to commit it
-        apiKey: '0d38da7efce50edd87189f2124058546',
+        apiKey: '6f4db54e4ee0ae77619b41dbe862af7f',
 
-        indexName: 'starknet-js',
+        indexName: 'starknetjs',
 
         // Optional: see doc section below
         contextualSearch: true,
