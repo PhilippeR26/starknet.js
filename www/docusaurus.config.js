@@ -5,7 +5,7 @@ const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 const generateSourceLinkTemplate = (gitRevision) =>
-  `https://github.com/PhilippeR26/starknet.js/blob/${
+  `https://github.com/starknet-io/starknet.js/blob/${
     gitRevision || '{gitRevision}'
   }/{path}#L{line}`;
 
@@ -16,13 +16,12 @@ const migrationGuideLink = '/docs/next/guides/migrate';
 const config = {
   title: 'Starknet.js',
   tagline: 'JavaScript library for Starknet',
-  url: 'https://PhilippeR26',
-  baseUrl: 'starknet.js',
+  url: 'https://starknetjs.com',
+  baseUrl: '/',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  //organizationName: 'starknet-io', // Usually your GitHub org/user name.
-  organizationName: 'PhilippeR26', // Usually your GitHub org/user name.
+  organizationName: 'starknet-io', // Usually your GitHub org/user name.
   projectName: 'starknet.js', // Usually your repo name.
 
   presets: [

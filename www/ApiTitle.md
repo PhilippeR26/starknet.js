@@ -1,7 +1,5 @@
 This API is based on the <ins>[Starknet.js V3](https://github.com/starknet-io/starknet.js/discussions/102)</ins> Interface write up by <ins>[Janek](https://twitter.com/0xjanek)</ins> of <ins>[Argent](https://www.argent.xyz/)</ins>
 
-# This is a test branch.
-
 ## Provider
 
 The Provider [**API**](./classes/Provider.md) allows you to interact with the Starknet network, without signing transactions or messages.
