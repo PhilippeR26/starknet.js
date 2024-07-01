@@ -3,7 +3,7 @@ import type { SPEC } from 'starknet-types-07';
 import { getStarkKey, utils } from '@scure/starknet';
 import { gzip, ungzip } from 'pako';
 
-import { ZERO, FeeMarginPercentage } from '../constants';
+import { ZERO, feeMarginPercentage } from '../constants';
 import {
   ArraySignatureType,
   BigNumberish,
@@ -174,7 +174,7 @@ export function signatureToHexArray(sig?: Signature): ArraySignatureType {
  */
 export function estimatedFeeToMaxFee(
   estimatedFee: BigNumberish,
-  overhead: number = FeeMarginPercentage.MAX_FEE
+  overhead: number = feeMarginPercentage.MAX_FEE
 ): bigint {
   return addPercent(estimatedFee, overhead);
 }
@@ -204,8 +204,8 @@ const result = stark.estimateFeeToBounds(feeEstimated, 70, 50);
  */
 export function estimateFeeToBounds(
   estimate: FeeEstimate | 0n,
-  amountOverhead: number = FeeMarginPercentage.L1_BOUND_MAX_AMOUNT,
-  priceOverhead: number = FeeMarginPercentage.L1_BOUND_MAX_PRICE_PER_UNIT
+  amountOverhead: number = feeMarginPercentage.L1_BOUND_MAX_AMOUNT,
+  priceOverhead: number = feeMarginPercentage.L1_BOUND_MAX_PRICE_PER_UNIT
 ): ResourceBounds {
   if (isBigInt(estimate)) {
     return {

@@ -178,7 +178,7 @@ export class Block {
     } else if (isNumber(__identifier)) {
       this.number = __identifier;
     } else {
-      this.tag = BlockTag.PENDING;
+      this.tag = BlockTag.pending;
     }
 
     if (isNumber(this.number) && this.number < 0) {

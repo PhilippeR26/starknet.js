@@ -31,7 +31,7 @@ import { getVersionsByType } from '../utils/transaction';
 
 const defaultOptions = {
   headers: { 'Content-Type': 'application/json' },
-  blockIdentifier: BlockTag.PENDING,
+  blockIdentifier: BlockTag.pending,
   retries: 200,
 };
 
