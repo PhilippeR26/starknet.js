@@ -14,7 +14,7 @@ import { BigNumberish, SubscriptionBlockIdentifier } from '../types';
 import { JRPC } from '../types/api';
 import { WebSocketEvent } from '../types/api/jsonrpc';
 import { stringify } from '../utils/json';
-import { bigNumberishArrayToHexadecimalStringArray, toHex } from '../utils/num';
+import { bigNumberishArrayToHexadecimalStringArray, toHex, toHex64 } from '../utils/num';
 import { Block } from '../utils/provider';
 
 export const WSSubscriptions = {
@@ -248,8 +248,16 @@ export class WebSocketChannel {
       if (!this.websocket) return;
       this.websocket.onmessage = ({ data }) => {
         const message: JRPC.ResponseBody = JSON.parse(data);
+        // console.log('sendReceive: send', method, params, sendId, '\nresp->', data, '\n');
         if (message.id === sendId) {
           if ('result' in message) {
+            // console.log(
+            //   'sendReceive: response obtained for req',
+            //   method,
+            //   params,
+            //   '\nresult=',
+            //   message.result
+            // );
             resolve(message.result);
           } else {
             reject(Error(`error on ${method}, ${message.error}`));
@@ -324,17 +332,18 @@ export class WebSocketChannel {
    * @param ref internal usage, only for managed subscriptions
    */
   public async unsubscribe(subscriptionId: number, ref?: string) {
-    const status = (await this.sendReceive('starknet_unsubscribe', {
-      subscription_id: subscriptionId,
-    })) as boolean;
-    if (status) {
-      if (ref) {
-        this.subscriptions.delete(ref);
-      }
-      this.onUnsubscribeLocal(subscriptionId);
-      this.onUnsubscribe(subscriptionId);
+    // const status = (await this.sendReceive('starknet_unsubscribe', {
+    //   subscription_id: subscriptionId,
+    // })) as boolean;
+    // if (status) {
+    if (ref) {
+      this.subscriptions.delete(ref);
     }
-    return status;
+    //   this.onUnsubscribeLocal(subscriptionId);
+    //   this.onUnsubscribe(subscriptionId);
+    // }
+    // return status;
+    return true;
   }
 
   /**
@@ -391,7 +400,7 @@ export class WebSocketChannel {
   private onMessageProxy(event: MessageEvent<any>) {
     const message: WebSocketEvent = JSON.parse(event.data);
     const eventName = message.method as keyof WebSocketEvents;
-
+    // console.log('=====onMessageProxy:', message);
     switch (eventName) {
       case 'starknet_subscriptionReorg':
         this.onReorg(message.params as SubscriptionReorgResponse);
@@ -462,6 +471,25 @@ export class WebSocketChannel {
     }) as Promise<SUBSCRIPTION_ID>;
   }
 
+  static encodeEventsSubscription(eventOptions: {
+    fromAddress?: BigNumberish;
+    keys?: string[][];
+  }): string {
+    const formattedKeys: string = eventOptions.keys
+      ? eventOptions.keys
+          .map((subKeys: string[]) =>
+            subKeys
+              .map((key: string, idx: number, arr: string[]) => {
+                const terminator = idx === arr.length - 1 ? 'end' : '';
+                return toHex64(`${key}`) + terminator;
+              })
+              .toString()
+          )
+          .toString()
+      : '';
+    return `${WSSubscriptions.EVENTS}-${eventOptions.fromAddress ? toHex64(eventOptions.fromAddress) : ''}-${eventOptions.keys ? formattedKeys : ''}`;
+  }
+
   /**
    * subscribe to 'starknet events'
    */
@@ -470,20 +498,39 @@ export class WebSocketChannel {
     keys?: string[][],
     blockIdentifier?: SubscriptionBlockIdentifier
   ) {
-    if (this.subscriptions.get(WSSubscriptions.EVENTS)) return false;
+    const mapKey = WebSocketChannel.encodeEventsSubscription({ fromAddress, keys });
+    if (this.subscriptions.get(mapKey)) return false;
     // eslint-disable-next-line prefer-rest-params
     const subId = await this.subscribeEventsUnmanaged(fromAddress, keys, blockIdentifier);
-    this.subscriptions.set(WSSubscriptions.EVENTS, subId);
+    this.subscriptions.set(mapKey, subId);
     return subId;
   }
 
   /**
    * Unsubscribe 'starknet events' subscription
    */
-  public unsubscribeEvents() {
-    const subId = this.subscriptions.get(WSSubscriptions.EVENTS);
-    if (!subId) throw Error('There is no subscription ID for this event');
-    return this.unsubscribe(subId, WSSubscriptions.EVENTS);
+  public async unsubscribeEvents(eventOptions?: { fromAddress?: BigNumberish; keys?: string[][] }) {
+    // const subId = this.subscriptions.get(WSSubscriptions.EVENTS);
+    // if (!subId) throw Error('There is no subscription ID for this event');
+    // return this.unsubscribe(subId, WSSubscriptions.EVENTS);
+
+    let entries: [string, number][] = [];
+    if (eventOptions && (eventOptions.fromAddress || eventOptions.keys)) {
+      const mapKey = WebSocketChannel.encodeEventsSubscription(eventOptions);
+      const subId = this.subscriptions.get(mapKey);
+      if (!subId) throw Error('There is no subscription ID for this event');
+      entries = [[mapKey, this.subscriptions.get(mapKey) as number]];
+    } else
+      entries = [...this.subscriptions.entries()].filter(
+        ([key, _]) => key.slice(0, WSSubscriptions.EVENTS.length) === WSSubscriptions.EVENTS
+      );
+    const results: boolean[] = await Promise.all(
+      entries.map(async ([key, data]): Promise<boolean> => {
+        const isUnsubscribed = await this.unsubscribe(data, key);
+        return isUnsubscribed;
+      })
+    );
+    return results.every((result) => result === true);
   }
 
   /**
@@ -502,23 +549,44 @@ export class WebSocketChannel {
     }) as Promise<SUBSCRIPTION_ID>;
   }
 
+  static encodeTransactionStatusSubscription(transactionHash: BigNumberish): string {
+    return `${WSSubscriptions.TRANSACTION_STATUS}-${toHex64(transactionHash)}`;
+  }
+
   /**
    * subscribe to transaction status
    */
   public async subscribeTransactionStatus(transactionHash: BigNumberish) {
-    if (this.subscriptions.get(WSSubscriptions.TRANSACTION_STATUS)) return false;
+    const mapKey = WebSocketChannel.encodeTransactionStatusSubscription(transactionHash);
+    if (this.subscriptions.get(mapKey)) return false;
     const subId = await this.subscribeTransactionStatusUnmanaged(transactionHash);
-    this.subscriptions.set(WSSubscriptions.TRANSACTION_STATUS, subId);
+    this.subscriptions.set(mapKey, subId);
     return subId;
   }
 
   /**
    * unsubscribe 'transaction status' subscription
    */
-  public async unsubscribeTransactionStatus() {
-    const subId = this.subscriptions.get(WSSubscriptions.TRANSACTION_STATUS);
-    if (!subId) throw Error('There is no subscription ID for this event');
-    return this.unsubscribe(subId, WSSubscriptions.TRANSACTION_STATUS);
+  public async unsubscribeTransactionStatus(transactionHash?: BigNumberish) {
+    let entries: [string, number][] = [];
+    if (transactionHash) {
+      const mapKey = WebSocketChannel.encodeTransactionStatusSubscription(transactionHash);
+      const subId = this.subscriptions.get(mapKey);
+      if (!subId) throw Error('There is no subscription ID for this event');
+      entries = [[mapKey, this.subscriptions.get(mapKey) as number]];
+    } else
+      entries = [...this.subscriptions.entries()].filter(
+        ([key, _]) =>
+          key.slice(0, WSSubscriptions.TRANSACTION_STATUS.length) ===
+          WSSubscriptions.TRANSACTION_STATUS
+      );
+    const results: boolean[] = await Promise.all(
+      entries.map(async ([key, data]): Promise<boolean> => {
+        const isUnsubscribed = await this.unsubscribe(data, key);
+        return isUnsubscribed;
+      })
+    );
+    return results.every((result) => result === true);
   }
 
   /**
@@ -544,7 +612,7 @@ export class WebSocketChannel {
     transactionDetails?: boolean,
     senderAddress?: BigNumberish[]
   ) {
-    if (this.subscriptions.get(WSSubscriptions.TRANSACTION_STATUS)) return false;
+    if (this.subscriptions.get(WSSubscriptions.PENDING_TRANSACTION)) return false;
     // eslint-disable-next-line no-param-reassign
     const subId = await this.subscribePendingTransactionUnmanaged(
       transactionDetails,
