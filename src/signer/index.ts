@@ -8,3 +8,4 @@ export {
   getLedgerPathBuffer111 as getLedgerPathBuffer,
 } from './ledgerSigner111';
 export { LedgerSigner221, getLedgerPathBuffer221 } from './ledgerSigner221';
+export { LedgerSigner225 } from './ledgerSigner225';
