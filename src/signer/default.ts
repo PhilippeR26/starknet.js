@@ -61,14 +61,6 @@ export class Signer implements SignerInterface {
       });
     } else if (Object.values(ETransactionVersion3).includes(details.version as any)) {
       const det = details as V3InvocationsSignerDetails;
-      console.log('***Signer default det=', {
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-        nonceDataAvailabilityMode: intDAM(det.nonceDataAvailabilityMode),
-        feeDataAvailabilityMode: intDAM(det.feeDataAvailabilityMode),
-      });
       msgHash = calculateInvokeTransactionHash({
         ...det,
         senderAddress: det.walletAddress,
