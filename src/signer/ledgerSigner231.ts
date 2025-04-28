@@ -30,14 +30,13 @@ import {
 } from '../utils/hash/transactionHash/v3';
 import type { RPCSPEC08 } from '../types/api';
 import { intDAM } from '../utils/stark';
-// import { intDAM } from '../utils/stark';
 
 /**
- * Signer for accounts using a Ledger Nano S+/X signature (Starknet Ledger APP version 2.3.0).
+ * Signer for accounts using a Ledger Nano S+/X signature (Starknet Ledger APP version 2.3.1).
  *
  * The Ledger has to be connected, unlocked and the Starknet APP has to be selected prior of use of this class.
  */
-export class LedgerSigner230<Transport extends Record<any, any> = any>
+export class LedgerSigner231<Transport extends Record<any, any> = any>
   extends LedgerSigner221
   implements SignerInterface
 {
@@ -52,15 +51,15 @@ export class LedgerSigner230<Transport extends Record<any, any> = any>
    * @param {LedgerPathCalculation} [pathFunction=getLedgerPathBuffer221]
    * defines the function that will calculate the path. By default `getLedgerPathBuffer221` is selected.
    *
-   * If you are using APP v2.3.0 with an account created with the v1.1.1, you need to use :
+   * If you are using APP v2.3.1 with an account created with the v1.1.1, you need to use :
    * ```typescript
-   * const myLedgerSigner = new LedgerSigner230(myNodeTransport, 0, undefined, getLedgerPathBuffer111);
+   * const myLedgerSigner = new LedgerSigner231(myNodeTransport, 0, undefined, getLedgerPathBuffer111);
    * ```
    * @example
    * ```typescript
    * import TransportNodeHid from "@ledgerhq/hw-transport-node-hid";
    * const myNodeTransport = await TransportNodeHid.create();
-   * const myLedgerSigner = new LedgerSigner230(myNodeTransport, 0);
+   * const myLedgerSigner = new LedgerSigner231(myNodeTransport, 0);
    * ```
    */
   constructor(
@@ -138,6 +137,34 @@ export class LedgerSigner230<Transport extends Record<any, any> = any>
     return this.decodeSignatureLedger(respSign);
   }
 
+  /**
+   * Ask to the Ledger Nano to display and sign a Starknet V3 transaction (Rpc 0.7 & Rpc 0.8).
+   * @param {V3InvocationsSignerDetails} txDetails All the details needed for a txV3.
+   * @param {Call[]} calls array of Starknet invocations
+   * @returns an object including the transaction Hash and the signature
+   * @example
+   * ```typescript
+   * const calls: Call[] = [{contractAddress: "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+   *      entrypoint: "transfer",
+   *      calldata:["0x11f5fc2a92ac03434a7937fe982f5e5293b65ad438a989c5b78fb8f04a12016",
+   *        "0x9184e72a000", "0x0"]}];
+   * const txDetailsV3: V3InvocationsSignerDetails = {
+   *   chainId: constants.StarknetChainId.SN_MAIN,
+   *   nonce: "28", accountDeploymentData: [],
+   *   paymasterData: [], cairoVersion: "1",
+   *   feeDataAvailabilityMode: "L1", nonceDataAvailabilityMode: "L1",
+   *   resourceBounds: {
+   *     l1_gas: { max_amount: "0x2a00", max_price_per_unit: "0x5c00000"
+   *     },
+   *     l2_gas: { max_amount: "0x00", max_price_per_unit: "0x00"},
+   *   }, tip: 0, version: "0x3", walletAddress: account0.address
+   *  }; // Rpc 0.7 transaction.
+   * const res = await myLedgerSigner.signTxV3(txDetailsV3, calls);
+   * // res = {hash:
+   * //   signature:
+   * // }
+   * ```
+   */
   public async signTxV3(
     txDetails: V3InvocationsSignerDetails,
     calls: Call[]
@@ -147,30 +174,17 @@ export class LedgerSigner230<Transport extends Record<any, any> = any>
       txDetails.accountDeploymentData.length <= 7,
       'accountDeploymentData includes more than 7 items'
     );
-    // console.log('###LedgerSigner230-txDetail txV3 =', txDetails, '\n calls=', calls);
     // APDU 0 for path
     await this._transporter.send(Number('0x5a'), 3, 0, 0, Buffer.from(this.pathBuffer));
     /* APDU 1 =
-  accountAddress (32 bytes) +
-  chain_id (32 bytes) +
-  nonce (32 bytes) +
-  data_availability_mode (32 bytes)
-*/
+      accountAddress (32 bytes) +
+      chain_id (32 bytes) +
+      nonce (32 bytes) +
+      data_availability_mode (32 bytes)
+    */
     const accountAddressBuf = this.convertBnToLedger(txDetails.walletAddress);
     const chainIdBuf = this.convertBnToLedger(txDetails.chainId);
     const nonceBuf = this.convertBnToLedger(txDetails.nonce);
-    // console.log(
-    //   '###LedgerSigner230-dAModeHashBuf =',
-    //   hashDAMode(
-    //     intDAM(txDetails.nonceDataAvailabilityMode),
-    //     intDAM(txDetails.feeDataAvailabilityMode)
-    //   ));
-    // const dAModeHashBuf = this.convertBnToLedger(
-    //   hashDAMode(
-    //     intDAM(txDetails.nonceDataAvailabilityMode),
-    //     intDAM(txDetails.feeDataAvailabilityMode)
-    //   )
-    // );
     const dAModeHashBuf = this.convertBnToLedger(
       hashDAMode(
         intDAM(txDetails.nonceDataAvailabilityMode),
@@ -242,7 +256,6 @@ export class LedgerSigner230<Transport extends Record<any, any> = any>
           respSign = await this._transporter.send(Number('0x5a'), 3, 6, 1, Buffer.from(part));
         });
       }
-      // respSign = await this._transporter.send(Number('0x5a'), 3, 2, 2);
     }
     return this.decodeSignatureLedger(respSign);
   }
@@ -330,7 +343,7 @@ export class LedgerSigner230<Transport extends Record<any, any> = any>
   }
 
   /**
-   *Ask the Ledger Nano to display and sign a Starknet V3 account deployment.
+   *Ask the Ledger Nano to display and sign a Starknet V3 account deployment (Rpc 0.7 & Rpc 0.8).
    * @param {V3DeployAccountSignerDetails} deployAccountDetail All the details needed for a V3 deploy account.
    * @returns an object including the transaction Hash and the signature
    * @example
@@ -351,7 +364,7 @@ export class LedgerSigner230<Transport extends Record<any, any> = any>
    *  addressSalt: '0x07e52f68e3160e1ef698211cdf6d3792368fe347e7e2d4a8ace14d9b248f39c5',
    *  chainId: '0x534e5f5345504f4c4941', maxFee: 0,
    *  version: '0x3', nonce: 0n
-   *}
+   *} // Rpc 0.7 transaction.
    * const res = await myLedgerSigner.signDeployAccountV3(deployData);
    * // res = {hash:
    * //   signature:
