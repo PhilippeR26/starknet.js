@@ -132,7 +132,6 @@ export class LedgerSigner231<Transport extends Record<any, any> = any>
           respSign = await this._transporter.send(Number('0x5a'), 4, 3, 1, Buffer.from(part));
         });
       }
-      // respSign = await this._transporter.send(Number('0x5a'), 4, 3, 2);
     }
     return this.decodeSignatureLedger(respSign);
   }
