@@ -166,7 +166,6 @@ const config = {
         out: 'API',
         name: 'Starknet.js API',
         includeVersion: true,
-        includeExtension: true,
         sourceLinkTemplate: generateSourceLinkTemplate(
           process.env.GIT_REVISION_OVERRIDE || 'develop'
         ),

@@ -66,7 +66,7 @@ export type ContractOptions = {
   parseResponse?: boolean;
   /**
    * Advance formatting used to get js types data as result
-   * @description https://starknetjs.com/docs/guides/define_call_message/#formatresponse
+   * https://starknetjs.com/docs/guides/define_call_message/#formatresponse
    * @example
    * ```typescript
    * // assign custom or existing method to resulting data

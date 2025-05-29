@@ -630,7 +630,7 @@ export class RpcProvider implements ProviderInterface {
   /**
    * Test if class is already declared from ContractClassIdentifier
    * Helper method using getClass
-   * @param ContractClassIdentifier
+   * @param contractClassIdentifier
    * @param blockIdentifier
    */
   public async isClassDeclared(
