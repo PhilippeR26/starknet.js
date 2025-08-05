@@ -493,14 +493,19 @@ export class RpcChannel {
       RPC.ETransactionFinalityStatus.ACCEPTED_ON_L1,
       RPC.ETransactionFinalityStatus.PRE_CONFIRMED,
     ];
-    let txStatus: RPC.TransactionStatus;
+    let txStatus: RPC.TransactionStatus = { finality_status: 'RECEIVED' };
     const start = new Date().getTime();
     while (retries > 0) {
       // eslint-disable-next-line no-await-in-loop
       await wait(retryInterval);
 
-      // eslint-disable-next-line no-await-in-loop
-      txStatus = await this.getTransactionStatus(txHash);
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        txStatus = await this.getTransactionStatus(txHash);
+        // eslint-disable-next-line no-empty
+      } catch {
+        console.log('Nothing!');
+      }
       logger.info(
         `${retries} ${JSON.stringify(txStatus)} ${(new Date().getTime() - start) / 1000}s.`
       );
