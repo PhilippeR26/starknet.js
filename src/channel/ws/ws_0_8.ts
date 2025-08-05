@@ -1,7 +1,13 @@
 /* eslint-disable no-underscore-dangle */
-import { RPCSPEC08, JRPC } from '../../types/api';
+import { RPCSPEC08, JRPC, type RPCSPEC09 } from '../../types/api';
 
-import { BigNumberish, SubscriptionBlockIdentifier } from '../../types';
+import {
+  BigNumberish,
+  BlockTag,
+  RPC,
+  SubscriptionBlockIdentifier,
+  type fastWaitForTransactionOptions,
+} from '../../types';
 import { WebSocketEvent } from '../../types/api/jsonrpc';
 import { EventEmitter } from '../../utils/eventEmitter';
 import { TimeoutError, WebSocketNotConnectedError } from '../../utils/errors';
@@ -9,7 +15,7 @@ import WebSocket from '../../utils/connect/ws';
 import { stringify } from '../../utils/json';
 import { isString, isObject } from '../../utils/typed';
 import { bigNumberishArrayToHexadecimalStringArray, toHex } from '../../utils/num';
-import { Block } from '../../utils/provider';
+import { Block, wait } from '../../utils/provider';
 import { config } from '../../global/config';
 import { logger } from '../../global/logger';
 import { Subscription } from './subscription';
@@ -18,6 +24,7 @@ import { Subscription } from './subscription';
 type BLOCK_HEADER = RPCSPEC08.BLOCK_HEADER;
 type EMITTED_EVENT = RPCSPEC08.EMITTED_EVENT;
 type NEW_TXN_STATUS = RPCSPEC08.NEW_TXN_STATUS;
+type NEW_TXN_STATUS09 = RPCSPEC09.NEW_TXN_STATUS;
 type SUBSCRIPTION_ID = RPCSPEC08.SUBSCRIPTION_ID;
 type TXN_HASH = RPCSPEC08.TXN_HASH;
 type TXN_WITH_HASH = RPCSPEC08.TXN_WITH_HASH;
@@ -619,6 +626,25 @@ export class WebSocketChannel {
     return subscription;
   }
 
+  public async subscribeTransactionStatus09(
+    transactionHash: BigNumberish
+  ): Promise<Subscription<NEW_TXN_STATUS09>> {
+    const method = 'starknet_subscribeTransactionStatus';
+    const params = {
+      transaction_hash: toHex(transactionHash),
+    };
+    const subId = await this.sendReceive<SUBSCRIPTION_ID>(method, params);
+    const subscription = new Subscription({
+      channel: this,
+      method,
+      params,
+      id: subId,
+      maxBufferSize: this.maxBufferSize,
+    });
+    this.activeSubscriptions.set(subId, subscription);
+    return subscription;
+  }
+
   /**
    * Subscribes to pending transactions.
    * @param {boolean} [transactionDetails] - If `true`, the full transaction details are included. Defaults to `false` (hash only).
@@ -676,5 +702,66 @@ export class WebSocketChannel {
     listener: (data: WebSocketChannelEvents[K]) => void
   ): void {
     this.events.off(event, listener);
+  }
+
+  public async fastWaitForTransaction(
+    txHash: BigNumberish,
+    address: string,
+    initNonceBN: BigNumberish,
+    options?: fastWaitForTransactionOptions
+  ): Promise<boolean> {
+    const initNonce = BigInt(initNonceBN);
+    let retries = options?.retries ?? 50;
+    const retryInterval = options?.retryInterval ?? 500; // 0.5s
+    const errorStates: string[] = [RPC.ETransactionExecutionStatus.REVERTED];
+    const successStates: string[] = [
+      RPC.ETransactionFinalityStatus.ACCEPTED_ON_L2,
+      RPC.ETransactionFinalityStatus.ACCEPTED_ON_L1,
+      RPC.ETransactionFinalityStatus.PRE_CONFIRMED,
+    ];
+    let txStatus: RPC.TransactionStatus = { finality_status: 'RECEIVED' };
+    const subscription = await this.subscribeTransactionStatus09(txHash);
+    subscription.on((rpc09Status: RPCSPEC09.NEW_TXN_STATUS) => {
+      txStatus = rpc09Status.status;
+    });
+    const start = new Date().getTime();
+    while (retries > 0) {
+      // eslint-disable-next-line no-await-in-loop
+      await wait(retryInterval);
+
+      logger.info(
+        `${retries} ${JSON.stringify(txStatus)} ${(new Date().getTime() - start) / 1000}s.`
+      );
+      const executionStatus = txStatus.execution_status ?? '';
+      const finalityStatus = txStatus.finality_status;
+      if (errorStates.includes(executionStatus)) {
+        const message = `${executionStatus}: ${finalityStatus}`;
+        const error = new Error(message) as Error & { response: RPC.TransactionStatus };
+        error.response = txStatus;
+        throw error;
+      } else if (successStates.includes(finalityStatus)) {
+        let currentNonce = initNonce;
+        while (currentNonce === initNonce && retries > 0) {
+          currentNonce = BigInt(
+            // eslint-disable-next-line no-await-in-loop
+            await this.sendReceive('starknet_getNonce', {
+              contract_address: address,
+              block_id: BlockTag.PRE_CONFIRMED,
+            })
+          );
+          logger.info(
+            `${retries} Checking new nonce ${currentNonce} ${(new Date().getTime() - start) / 1000}s.`
+          );
+          if (currentNonce !== initNonce) return true;
+          // eslint-disable-next-line no-await-in-loop
+          await wait(retryInterval);
+          retries -= 1;
+        }
+        return false;
+      }
+
+      retries -= 1;
+    }
+    return false;
   }
 }
