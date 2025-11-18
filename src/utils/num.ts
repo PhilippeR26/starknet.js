@@ -407,3 +407,17 @@ export function getNext(iterator: Iterator<string>): string {
   if (it.done) throw new Error('Unexpected end of response');
   return it.value;
 }
+
+export function bigIntMax(...values: bigint[]): bigint {
+  if (values.length === 0) {
+    throw new Error('Empty list in bigintMax.');
+  }
+  return values.reduce((max, current) => (current > max ? current : max), 0n);
+}
+
+export function bigIntMin(...values: bigint[]): bigint {
+  if (values.length === 0) {
+    throw new Error('Empty list in bigintMin.');
+  }
+  return values.reduce((max, current) => (current > max ? current : max), values[0]);
+}

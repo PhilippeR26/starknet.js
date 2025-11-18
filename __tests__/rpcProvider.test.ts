@@ -895,7 +895,10 @@ describeIfTestnet('RPCProvider', () => {
 });
 describeIfNotDevnet('If not devnet: waitForBlock', () => {
   // As Starknet-devnet isn't generating automatically blocks at a periodic time, it's excluded of this test.
-  const providerStandard = new RpcProvider({ nodeUrl: process.env.TEST_RPC_URL });
+  const providerStandard = new RpcProvider({
+    nodeUrl: process.env.TEST_RPC_URL,
+    blockIdentifier: BlockTag.PRE_CONFIRMED,
+  });
   const providerFastTimeOut = new RpcProvider({ nodeUrl: process.env.TEST_RPC_URL, retries: 1 });
   let block: number;
 

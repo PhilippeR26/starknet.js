@@ -65,7 +65,7 @@ import { ETransactionType } from '../types/api';
 import { CallData } from '../utils/calldata';
 import { extractContractHashes, isSierra } from '../utils/contract';
 import { calculateContractAddressFromHash } from '../utils/hash';
-import { isHex, toBigInt, toHex } from '../utils/num';
+import { bigIntMax, isHex, toBigInt, toHex } from '../utils/num';
 import {
   buildExecuteFromOutsideCall,
   getOutsideCall,
@@ -90,7 +90,6 @@ import { assertPaymasterTransactionSafety } from '../utils/paymaster';
 import assert from '../utils/assert';
 import { defaultDeployer, Deployer } from '../deployer';
 import type { TipType } from '../provider/modules/tip';
-import { RPC09 } from '../channel';
 
 export class Account extends Provider implements AccountInterface {
   public signer: SignerInterface;
@@ -177,7 +176,12 @@ export class Account extends Provider implements AccountInterface {
     // Transform all calls into a single invocation
     const invocations = [{ type: ETransactionType.INVOKE, payload: [calls].flat() }];
     const estimateBulk = await this.estimateFeeBulk(invocations, details);
-    return estimateBulk[0]; // Get the first (and only) estimate
+    const estimateResponse = estimateBulk[0];
+    estimateResponse.resourceBounds.l2_gas.max_price_per_unit = bigIntMax(
+      3n * 10n ** 9n,
+      estimateResponse.resourceBounds.l2_gas.max_price_per_unit
+    );
+    return estimateResponse;
   }
 
   public async estimateDeclareFee(
@@ -196,6 +200,12 @@ export class Account extends Provider implements AccountInterface {
       },
     ];
     const estimateBulk = await this.estimateFeeBulk(invocations, details);
+    const estimateResponse = estimateBulk[0];
+    estimateResponse.resourceBounds.l2_gas.max_price_per_unit = bigIntMax(
+      3n * 10n ** 9n,
+      estimateResponse.resourceBounds.l2_gas.max_price_per_unit
+    );
+    return estimateResponse;
     return estimateBulk[0]; // Get the first (and only) estimate
   }
 
@@ -226,6 +236,12 @@ export class Account extends Provider implements AccountInterface {
       },
     ];
     const estimateBulk = await this.estimateFeeBulk(invocations, details);
+    const estimateResponse = estimateBulk[0];
+    estimateResponse.resourceBounds.l2_gas.max_price_per_unit = bigIntMax(
+      3n * 10n ** 9n,
+      estimateResponse.resourceBounds.l2_gas.max_price_per_unit
+    );
+    return estimateResponse;
     return estimateBulk[0]; // Get the first (and only) estimate
   }
 
@@ -365,10 +381,6 @@ export class Account extends Provider implements AccountInterface {
     transactionsDetail: UniversalDetails = {},
     waitDetail: fastWaitForTransactionOptions = {}
   ): Promise<fastExecuteResponse> {
-    assert(
-      this.channel instanceof RPC09.RpcChannel,
-      'Wrong Rpc version in Provider. At least Rpc v0.9 required.'
-    );
     assert(
       this.channel.blockIdentifier === BlockTag.PRE_CONFIRMED,
       'Provider needs to be initialized with `pre_confirmed` blockIdentifier option.'

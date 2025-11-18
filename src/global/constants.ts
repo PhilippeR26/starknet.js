@@ -81,6 +81,7 @@ export { _NetworkName as NetworkName };
 const _StarknetChainId = {
   SN_MAIN: '0x534e5f4d41494e', // encodeShortString('SN_MAIN'),
   SN_SEPOLIA: '0x534e5f5345504f4c4941', // encodeShortString('SN_SEPOLIA')
+  SN_INTEGRATION_SEPOLIA: '0x534e5f494e544547524154494f4e5f5345504f4c4941',
 } as const;
 type _StarknetChainId = ValuesType<typeof _StarknetChainId>;
 export { _StarknetChainId as StarknetChainId };
