@@ -1,11 +1,7 @@
 {
   "extends": "./tsconfig.json",
-  "include": [
-    //
-    "__mocks__/**/*",
-    "__tests__/**/*",
-    "src/**/*",
-    "jest.config.ts",
-    ".releaserc.mjs"
-  ]
+  "compilerOptions": {
+    "types": ["node", "jest"]
+  },
+  "include": ["__mocks__/**/*", "__tests__/**/*", "src/**/*", "jest.config.ts", ".releaserc.mjs"]
 }

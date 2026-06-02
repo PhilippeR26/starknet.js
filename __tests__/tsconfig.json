@@ -1,0 +1,7 @@
+{
+  "extends": "../tsconfig.eslint.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false
+  }
+}
